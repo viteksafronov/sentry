@@ -12,16 +12,40 @@ import ProjectCard from './projectCard';
 
 class TeamSection extends React.Component {
   static propTypes = {
+    api: PropTypes.object,
     team: SentryTypes.Team,
     orgId: PropTypes.string,
     showBorder: PropTypes.bool,
     access: PropTypes.object,
     title: PropTypes.node,
-    projects: PropTypes.array,
   };
 
+  state = {
+    loading: true,
+    projects: [],
+  };
+
+  componentDidMount() {
+    this.fetchData();
+  }
+
+  async fetchData() {
+    const {api, team, orgId} = this.props;
+
+    this.setState({loading: true});
+
+    try {
+      const projects = await api.requestPromise(`/teams/${orgId}/${team.slug}/projects/`);
+
+      this.setState({loading: false, projects});
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   render() {
-    const {team, projects, title, showBorder, orgId, access} = this.props;
+    const {team, title, showBorder, orgId, access} = this.props;
+    const {projects} = this.state;
 
     const hasTeamAccess = access.has('team:read');
     const hasProjectAccess = access.has('project:read');

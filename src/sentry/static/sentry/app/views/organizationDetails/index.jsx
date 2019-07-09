@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, {Component} from 'react';
 
 import {Client} from 'app/api';
@@ -149,6 +150,10 @@ class OrganizationDetailsBody extends Component {
 }
 
 export default class OrganizationDetails extends Component {
+  static propTypes = {
+    route: PropTypes.object,
+  };
+
   componentDidUpdate(prevProps) {
     if (
       prevProps.params &&
@@ -160,7 +165,12 @@ export default class OrganizationDetails extends Component {
   }
   render() {
     return (
-      <OrganizationContext includeSidebar useLastOrganization {...this.props}>
+      <OrganizationContext
+        includeSidebar
+        useLastOrganization
+        lite={this.props.route && this.props.route.lite}
+        {...this.props}
+      >
         <OrganizationDetailsBody>{this.props.children}</OrganizationDetailsBody>
       </OrganizationContext>
     );

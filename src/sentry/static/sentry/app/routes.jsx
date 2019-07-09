@@ -12,7 +12,6 @@ import OnboardingWizard from 'app/views/onboarding/wizard';
 import OrganizationActivity from 'app/views/organizationActivity';
 import OrganizationContext from 'app/views/organizationContext';
 import OrganizationCreate from 'app/views/organizationCreate';
-import OrganizationDashboard from 'app/views/organizationProjectsDashboard';
 import OrganizationDetails from 'app/views/organizationDetails';
 import OrganizationHomeContainer from 'app/components/organizations/homeContainer';
 import OrganizationMembers from 'app/views/settings/organizationMembers';
@@ -841,14 +840,24 @@ function routes() {
           </Route>
         </Route>
       </Route>
+
+      <Route
+        path="/organizations/:orgId/"
+        lite
+        component={errorHandler(OrganizationDetails)}
+      >
+        <Route
+          path="projects/"
+          componentPromise={() =>
+            import(/* webpackChunkName: "OrganizationProjectsDashboard" */ './views/organizationProjectsDashboard')
+          }
+          component={errorHandler(LazyLoad)}
+        />
+      </Route>
+
       <Route path="/:orgId/" component={errorHandler(OrganizationDetails)}>
         <Route component={errorHandler(OrganizationRoot)}>
-          <IndexRoute component={errorHandler(OrganizationDashboard)} />
           {hook('routes:organization-root')}
-          <Route
-            path="/organizations/:orgId/projects/"
-            component={errorHandler(OrganizationDashboard)}
-          />
           <Route
             path="/organizations/:orgId/stats/"
             component={errorHandler(OrganizationStats)}

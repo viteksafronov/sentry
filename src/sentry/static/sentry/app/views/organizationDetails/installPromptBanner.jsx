@@ -29,7 +29,8 @@ class InstallPromptBanner extends React.Component {
       organization: {projects},
       config,
     } = this.props;
-    return !!projects.find(p => p.firstEvent) || !!config.sentFirstEvent;
+
+    return !!((projects || []).find(p => p.firstEvent) || !!config.sentFirstEvent);
   }
 
   getUrl() {
@@ -38,7 +39,7 @@ class InstallPromptBanner extends React.Component {
     let url = `/onboarding/${organization.slug}`;
 
     // if project with a valid platform then go straight to instructions
-    const projects = organization.projects;
+    const projects = organization.projects || [];
     const projectCount = projects.length;
     if (projectCount > 0 && getPlatformName(projects[projectCount - 1].platform)) {
       const project = projects[projectCount - 1];

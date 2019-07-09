@@ -3,33 +3,72 @@ import {Link, browserHistory} from 'react-router';
 import LazyLoad from 'react-lazyload';
 import PropTypes from 'prop-types';
 import React from 'react';
-import createReactClass from 'create-react-class';
 import styled from 'react-emotion';
 
-import {sortProjects} from 'app/utils';
+// import {sortProjects} from 'app/utils';
 import {t} from 'app/locale';
 import Button from 'app/components/button';
-import ConfigStore from 'app/stores/configStore';
+// import ConfigStore from 'app/stores/configStore';
 import IdBadge from 'app/components/idBadge';
 import NoProjectMessage from 'app/components/noProjectMessage';
 import PageHeading from 'app/components/pageHeading';
 import ProjectsStatsStore from 'app/stores/projectsStatsStore';
 import SentryTypes from 'app/sentryTypes';
-import getProjectsByTeams from 'app/utils/getProjectsByTeams';
 import getRouteStringFromRoutes from 'app/utils/getRouteStringFromRoutes';
 import space from 'app/styles/space';
+import withApi from 'app/utils/withApi';
 import withOrganization from 'app/utils/withOrganization';
-import withProjects from 'app/utils/withProjects';
-import withTeams from 'app/utils/withTeams';
 
-import Resources from './resources';
+// import Resources from './resources';
 import TeamSection from './teamSection';
+
+class Teams extends React.Component {
+  static propTypes = {
+    api: PropTypes.object.isRequired,
+    orgId: PropTypes.string.isRequired,
+  };
+
+  state = {
+    teams: null,
+    initiallyLoaded: false,
+    fetching: false,
+    hasMore: null,
+  };
+
+  componentDidMount() {
+    this.fetchData();
+  }
+
+  async fetchData() {
+    const {api, orgId} = this.props;
+
+    this.setState({fetching: true});
+
+    try {
+      const teams = await api.requestPromise(`/organizations/${orgId}/teams/`, {
+        query: {lite: '1'},
+      });
+
+      this.setState({initiallyLoaded: true, fetching: false, teams});
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  render() {
+    return this.props.children({
+      teams: this.state.teams,
+      initiallyLoaded: this.state.initiallyLoaded,
+      fetching: this.state.fetching,
+      hasMore: this.state.hasMore,
+    });
+  }
+}
 
 class Dashboard extends React.Component {
   static propTypes = {
+    api: PropTypes.object.isRequired,
     routes: PropTypes.array,
-    teams: PropTypes.array,
-    projects: PropTypes.array,
     organization: SentryTypes.Organization,
   };
 
@@ -46,26 +85,28 @@ class Dashboard extends React.Component {
   }
 
   render() {
-    const {teams, projects, params, organization} = this.props;
-    const sortedProjects = sortProjects(projects);
+    const {api, params, organization} = this.props;
+    // const sortedProjects = sortProjects(projects);
 
-    const {isSuperuser} = ConfigStore.get('user');
+    // const {isSuperuser} = ConfigStore.get('user');
 
-    const {projectsByTeam} = getProjectsByTeams(teams, sortedProjects, isSuperuser);
-    const teamSlugs = Object.keys(projectsByTeam).sort();
-    const favorites = projects.filter(project => project.isBookmarked);
+    // const {projectsByTeam} = getProjectsByTeams(teams, sortedProjects, isSuperuser);
+    // const teamSlugs = Object.keys(projectsByTeam).sort();
+    const favorites = [];
+    // const favorites = projects.filter(project => project.isBookmarked);
     const access = new Set(organization.access);
     const canCreateProjects = access.has('project:admin');
-    const teamsMap = new Map(teams.map(teamObj => [teamObj.slug, teamObj]));
+    // const teamsMap = new Map(teams.map(teamObj => [teamObj.slug, teamObj]));
 
     const hasTeamAdminAccess = access.has('team:admin');
+    const projects = [];
 
-    if (projects.length === 1 && !projects[0].firstEvent) {
-      return <Resources org={organization} project={projects[0]} />;
-    }
+    // if (projects.length === 1 && !projects[0].firstEvent) {
+    // return <Resources org={organization} project={projects[0]} />;
+    // }
 
     return (
-      <React.Fragment>
+      <Flex flex="1" direction="column">
         {projects.length > 0 && (
           <ProjectsHeader>
             <PageHeading>Projects</PageHeading>
@@ -85,47 +126,51 @@ class Dashboard extends React.Component {
           </ProjectsHeader>
         )}
 
-        {teamSlugs.map((slug, index) => {
-          const showBorder = index !== teamSlugs.length - 1;
-          const team = teamsMap.get(slug);
-          return (
-            <LazyLoad key={slug} once debounce={50} height={300} offset={300}>
-              <TeamSection
-                orgId={params.orgId}
-                team={team}
-                showBorder={showBorder}
-                title={
-                  hasTeamAdminAccess ? (
-                    <TeamLink to={`/settings/${organization.slug}/teams/${team.slug}/`}>
-                      <IdBadge team={team} avatarSize={22} />
-                    </TeamLink>
-                  ) : (
-                    <IdBadge team={team} avatarSize={22} />
-                  )
-                }
-                projects={projectsByTeam[slug]}
-                access={access}
-              />
-            </LazyLoad>
-          );
-        })}
-        {teamSlugs.length === 0 && favorites.length === 0 && (
-          <NoProjectMessage organization={organization}>{null}</NoProjectMessage>
-        )}
-      </React.Fragment>
+        <Teams api={api} orgId={organization.slug}>
+          {({initiallyLoaded, fetching, teams}) => {
+            if (!initiallyLoaded || fetching) {
+              return null;
+            }
+
+            if (teams.length === 0 && favorites.length === 0) {
+              return (
+                <NoProjectMessage organization={organization}>{null}</NoProjectMessage>
+              );
+            }
+
+            return teams.map((team, index) => {
+              const showBorder = index !== teams.length - 1;
+              // const team = teamsMap.get(slug);
+              return (
+                <LazyLoad key={team.slug} once debounce={50} height={300} offset={300}>
+                  <TeamSection
+                    api={api}
+                    orgId={params.orgId}
+                    team={team}
+                    showBorder={showBorder}
+                    title={
+                      hasTeamAdminAccess ? (
+                        <TeamLink
+                          to={`/settings/${organization.slug}/teams/${team.slug}/`}
+                        >
+                          <IdBadge team={team} avatarSize={22} />
+                        </TeamLink>
+                      ) : (
+                        <IdBadge team={team} avatarSize={22} />
+                      )
+                    }
+                    projects={[]}
+                    access={access}
+                  />
+                </LazyLoad>
+              );
+            });
+          }}
+        </Teams>
+      </Flex>
     );
   }
 }
-
-const OrganizationDashboard = createReactClass({
-  render() {
-    return (
-      <Flex flex="1" direction="column">
-        <Dashboard {...this.props} />
-      </Flex>
-    );
-  },
-});
 
 const TeamLink = styled(Link)`
   display: flex;
@@ -140,4 +185,4 @@ const ProjectsHeader = styled('div')`
 `;
 
 export {Dashboard};
-export default withTeams(withProjects(withOrganization(OrganizationDashboard)));
+export default withApi(withOrganization(Dashboard));

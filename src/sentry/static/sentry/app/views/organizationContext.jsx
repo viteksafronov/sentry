@@ -38,6 +38,7 @@ const OrganizationContext = createReactClass({
     includeSidebar: PropTypes.bool,
     useLastOrganization: PropTypes.bool,
     organizationsLoading: PropTypes.bool,
+    lite: PropTypes.bool,
     organizations: PropTypes.arrayOf(SentryTypes.Organization),
   },
 
@@ -114,78 +115,101 @@ const OrganizationContext = createReactClass({
     );
   },
 
-  fetchData() {
+  async fetchData() {
     if (!this.getOrganizationSlug()) {
       this.setState({loading: this.props.organizationsLoading});
       return;
     }
 
-    const promises = [
-      this.props.api.requestPromise(this.getOrganizationDetailsEndpoint()),
-      fetchOrganizationEnvironments(this.props.api, this.getOrganizationSlug()),
-    ];
+    try {
+      const {lite, api} = this.props;
+      const [data, environments] = await Promise.all([
+        lite ? this.fetchLiteData() : this.fetchFullData(),
+        fetchOrganizationEnvironments(api, this.getOrganizationSlug()),
+      ]);
 
-    Promise.all(promises)
-      .then(([data, environments]) => {
-        // Allow injection via getsentry et all
-        const hooks = [];
-        HookStore.get('organization:header').forEach(cb => {
-          hooks.push(cb(data));
-        });
-
-        setActiveOrganization(data);
-
-        TeamStore.loadInitialData(data.teams);
-        ProjectsStore.loadInitialData(data.projects);
-
-        // Make an exception for issue details in the case where it is accessed directly (e.g. from email)
-        // We do not want to load the user's last used env/project in this case, otherwise will
-        // lead to very confusing behavior.
-        if (
-          !this.props.routes.find(
-            ({path}) => path && path.includes('/organizations/:orgId/issues/:groupId/')
-          )
-        ) {
-          GlobalSelectionStore.loadInitialData(data, this.props.location.query);
-        }
-        OrganizationEnvironmentsStore.loadInitialData(environments);
-
-        this.setState({
-          organization: data,
-          loading: false,
-          error: false,
-          errorType: null,
-          hooks,
-        });
-      })
-      .catch(err => {
-        let errorType = null;
-
-        switch (err.statusText) {
-          case 'NOT FOUND':
-            errorType = ERROR_TYPES.ORG_NOT_FOUND;
-            break;
-          default:
-        }
-        this.setState({
-          loading: false,
-          error: true,
-          errorType,
-        });
-
-        // If user is superuser, open sudo window
-        const user = ConfigStore.get('user');
-        if (!user || !user.isSuperuser || err.status !== 403) {
-          // This `catch` can swallow up errors in development (and tests)
-          // So let's log them. This may create some noise, especially the test case where
-          // we specifically test this branch
-          console.error(err); // eslint-disable-line no-console
-          return;
-        }
-        openSudo({
-          retryRequest: () => Promise.resolve(this.fetchData()),
-        });
+      // Allow injection via getsentry et all
+      const hooks = [];
+      HookStore.get('organization:header').forEach(cb => {
+        hooks.push(cb(data));
       });
+
+      setActiveOrganization(data);
+
+      OrganizationEnvironmentsStore.loadInitialData(environments);
+
+      this.setState({
+        organization: data,
+        loading: false,
+        error: false,
+        errorType: null,
+        hooks,
+      });
+    } catch (err) {
+      this.handleFetchError(err);
+    }
+  },
+
+  async fetchFullData() {
+    const data = await this.props.api.requestPromise(
+      this.getOrganizationDetailsEndpoint()
+    );
+
+    TeamStore.loadInitialData(data.teams);
+    ProjectsStore.loadInitialData(data.projects);
+    this.updateGlobalSelectionStore(data);
+
+    return data;
+  },
+
+  async fetchLiteData() {
+    return this.props.api.requestPromise(this.getOrganizationDetailsEndpoint(), {
+      query: {
+        lite: '1',
+      },
+    });
+  },
+
+  handleFetchError(err) {
+    let errorType = null;
+
+    switch (err.statusText) {
+      case 'NOT FOUND':
+        errorType = ERROR_TYPES.ORG_NOT_FOUND;
+        break;
+      default:
+    }
+    this.setState({
+      loading: false,
+      error: true,
+      errorType,
+    });
+
+    // If user is superuser, open sudo window
+    const user = ConfigStore.get('user');
+    if (!user || !user.isSuperuser || err.status !== 403) {
+      // This `catch` can swallow up errors in development (and tests)
+      // So let's log them. This may create some noise, especially the test case where
+      // we specifically test this branch
+      console.error(err); // eslint-disable-line no-console
+      return;
+    }
+    openSudo({
+      retryRequest: () => Promise.resolve(this.fetchData()),
+    });
+  },
+
+  updateGlobalSelectionStore(data) {
+    // Make an exception for issue details in the case where it is accessed directly (e.g. from email)
+    // We do not want to load the user's last used env/project in this case, otherwise will
+    // lead to very confusing behavior.
+    if (
+      !this.props.routes.find(
+        ({path}) => path && path.includes('/organizations/:orgId/issues/:groupId/')
+      )
+    ) {
+      GlobalSelectionStore.loadInitialData(data, this.props.location.query);
+    }
   },
 
   getOrganizationDetailsEndpoint() {

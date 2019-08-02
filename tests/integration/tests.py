@@ -10,7 +10,7 @@ import mock
 import six
 import zlib
 
-from sentry import tagstore
+from sentry import eventstore, tagstore
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test.utils import override_settings
@@ -174,7 +174,7 @@ class SentryRemoteTest(TestCase):
 
         event_id = json.loads(resp.content)['id']
         instance = Event.objects.get(event_id=event_id)
-        Event.objects.bind_nodes([instance], 'data')
+        eventstore.bind_nodes([instance])
 
         assert instance.message == 'hello'
         assert instance.data['logentry'] == {'formatted': 'hello'}
@@ -218,7 +218,7 @@ class SentryRemoteTest(TestCase):
 
         event_id = json.loads(resp.content)['id']
         instance = Event.objects.get(event_id=event_id)
-        Event.objects.bind_nodes([instance], 'data')
+        eventstore.bind_nodes([instance])
 
         assert len(instance.data['exception']) == 1
         assert instance.title == instance.data['title'] == 'ZeroDivisionError: cannot divide by zero'
@@ -582,7 +582,7 @@ class CspReportTest(TestCase):
         assert resp.status_code == 201, resp.content
         assert Event.objects.count() == 1
         e = Event.objects.all()[0]
-        Event.objects.bind_nodes([e], 'data')
+        eventstore.bind_nodes([e])
         assert output['message'] == e.data['logentry']['formatted']
         for key, value in six.iteritems(output['tags']):
             assert e.get_tag(key) == value

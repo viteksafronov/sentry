@@ -3,8 +3,9 @@ from __future__ import absolute_import
 import operator
 import six
 
+from sentry import eventstore
 from sentry.api.serializers import serialize
-from sentry.models import (Release, ReleaseCommit, Commit, CommitFileChange, Event, Group)
+from sentry.models import Release, ReleaseCommit, Commit, CommitFileChange, Group
 from sentry.api.serializers.models.commit import CommitSerializer, get_users_for_commits
 from sentry.utils import metrics
 from sentry.utils.safe import get_path
@@ -165,7 +166,7 @@ def get_previous_releases(project, start_version, limit=5):
 
 def get_event_file_committers(project, event, frame_limit=25):
     # populate event data
-    Event.objects.bind_nodes([event], 'data')
+    eventstore.bind_nodes([event])
 
     group = Group.objects.get(id=event.group_id)
 

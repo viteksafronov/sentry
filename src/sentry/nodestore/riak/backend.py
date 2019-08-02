@@ -76,7 +76,7 @@ class RiakNodeStorage(NodeStorage):
 
     def get_multi(self, id_list):
         # shortcut for just one id since this is a common
-        # case for us from EventManager.bind_nodes
+        # case for us from eventstore.bind_nodes
         if len(id_list) == 1:
             id = id_list[0]
             return {id: self.get(id)}

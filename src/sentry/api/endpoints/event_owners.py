@@ -2,11 +2,12 @@ from __future__ import absolute_import
 
 from rest_framework.response import Response
 
+from sentry import eventstore
 from sentry.api.bases.project import ProjectEndpoint
 from sentry.api.fields.actor import Actor
 from sentry.api.serializers import serialize
 from sentry.api.serializers.models.actor import ActorSerializer
-from sentry.models import Event, SnubaEvent, ProjectOwnership
+from sentry.models import SnubaEvent, ProjectOwnership
 
 
 class EventOwnersEndpoint(ProjectEndpoint):
@@ -25,7 +26,7 @@ class EventOwnersEndpoint(ProjectEndpoint):
             return Response({'detail': 'Event not found'}, status=404)
 
         # populate event data
-        Event.objects.bind_nodes([event], 'data')
+        eventstore.bind_nodes([event])
 
         owners, rules = ProjectOwnership.get_owners(project.id, event.data)
 

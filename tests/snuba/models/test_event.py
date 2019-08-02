@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from sentry.api.serializers import serialize
 from sentry.models.event import Event, SnubaEvent
 from sentry.testutils import SnubaTestCase, TestCase
-from sentry import nodestore
+from sentry import eventstore, nodestore
 
 
 class SnubaEventTest(TestCase, SnubaTestCase):
@@ -124,7 +124,7 @@ class SnubaEventTest(TestCase, SnubaTestCase):
         """
         event = SnubaEvent.get_event(self.proj1.id, self.event_id)
         assert event.data._node_data is None
-        Event.objects.bind_nodes([event], 'data')
+        eventstore.bind_nodes([event])
         assert event.data._node_data is not None
         assert event.data['user']['id'] == u'user1'
 

@@ -10,10 +10,11 @@ from django.conf.urls import url
 from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 
+from sentry import eventstore
 from sentry.api.serializers.models.plugin import PluginSerializer
 # api compat
 from sentry.exceptions import PluginError  # NOQA
-from sentry.models import Activity, Event, GroupMeta
+from sentry.models import Activity, GroupMeta
 from sentry.plugins import Plugin
 from sentry.plugins.base.configuration import react_plugin_config
 from sentry.plugins.endpoints import PluginGroupEndpoint
@@ -249,7 +250,7 @@ class IssueTrackingPlugin2(Plugin):
                 'message': 'Unable to create issues: there are '
                            'no events associated with this group',
             }, status=400)
-        Event.objects.bind_nodes([event], 'data')
+        eventstore.bind_nodes([event])
         try:
             fields = self.get_new_issue_fields(request, group, event, **kwargs)
         except Exception as e:
@@ -315,7 +316,7 @@ class IssueTrackingPlugin2(Plugin):
                            'no events associated with this group',
             }, status=400)
 
-        Event.objects.bind_nodes([event], 'data')
+        eventstore.bind_nodes([event])
 
         try:
             fields = self.get_link_existing_issue_fields(request, group, event, **kwargs)

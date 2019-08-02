@@ -47,6 +47,6 @@ class EventStorageTest(TestCase):
         event = SnubaEvent.objects.from_event_id('a' * 32, self.project.id)
         event2 = SnubaEvent.objects.from_event_id('b' * 32, self.project.id)
         assert event.data._node_data is None
-        self.eventstorage.bind_nodes([event, event2], 'data')
+        self.eventstorage.bind_nodes([event, event2])
         assert event.data._node_data is not None
         assert event.data['user']['id'] == u'user1'

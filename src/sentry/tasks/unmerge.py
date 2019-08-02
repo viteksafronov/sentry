@@ -5,7 +5,7 @@ from collections import defaultdict, OrderedDict
 
 from django.db import transaction
 
-from sentry import eventstream, tagstore
+from sentry import eventstream, eventstore, tagstore
 from sentry.app import tsdb
 from sentry.constants import DEFAULT_LOGGER_NAME, LOG_LEVELS_MAP
 from sentry.event_manager import generate_culprit
@@ -606,7 +606,7 @@ def unmerge(
 
         return destination_id
 
-    Event.objects.bind_nodes(events, 'data')
+    eventstore.bind_nodes(events)
 
     source_events = []
     destination_events = []

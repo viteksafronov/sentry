@@ -12,6 +12,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 
+from sentry import eventstore
 from sentry.models import (Event, Group, ProjectKey, ProjectOption, UserReport)
 from sentry.web.helpers import render_to_response
 from sentry.signals import user_feedback_received
@@ -167,7 +168,7 @@ class ErrorPageEmbedView(View):
                 except Group.DoesNotExist:
                     pass
             else:
-                Event.objects.bind_nodes([event])
+                eventstore.bind_nodes([event])
                 report.environment = event.get_environment()
                 report.group = event.group
 

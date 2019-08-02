@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from collections import defaultdict
 from mock import patch
 
-from sentry import tagstore
+from sentry import eventstore, tagstore
 from sentry.tagstore.models import GroupTagValue
 from sentry.tasks.merge import merge_groups
 from sentry.models import Event, Group, GroupEnvironment, GroupMeta, GroupRedirect, UserReport
@@ -76,12 +76,12 @@ class MergeGroupTest(TestCase):
         # reference check being bound to a group
         event1 = Event.objects.get(id=event1.id)
         assert event1.group_id == group2.id
-        Event.objects.bind_nodes([event1], 'data')
+        eventstore.bind_nodes([event1])
         assert event1.data['extra']['foo'] == 'bar'
 
         event2 = Event.objects.get(id=event2.id)
         assert event2.group_id == group2.id
-        Event.objects.bind_nodes([event2], 'data')
+        eventstore.bind_nodes([event2])
         assert event2.data['extra']['foo'] == 'baz'
 
     def test_merge_creates_redirect(self):

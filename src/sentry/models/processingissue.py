@@ -5,6 +5,7 @@ from django.db import models
 from django.db.models.aggregates import Count
 from django.utils import timezone
 
+from sentry import eventstore
 from sentry.db.models import (BaseManager, Model, FlexibleForeignKey, GzippedDictField, sane_repr)
 
 
@@ -65,7 +66,6 @@ class ProcessingIssueManager(BaseManager):
         a list of raw events that are now resolved and a bool that indicates
         if there are more.
         """
-        from sentry.models import RawEvent
         rv = list(self.find_resolved_queryset([project_id])[:limit])
         if len(rv) > limit:
             rv = rv[:limit]
@@ -74,7 +74,7 @@ class ProcessingIssueManager(BaseManager):
             has_more = False
 
         rv = list(rv)
-        RawEvent.objects.bind_nodes(rv, 'data')
+        eventstore.bind_nodes(rv)
         return rv, has_more
 
     def record_processing_issue(self, raw_event, scope, object, type, data=None):

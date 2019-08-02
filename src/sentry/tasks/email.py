@@ -2,6 +2,7 @@ from __future__ import absolute_import, print_function
 
 import logging
 
+from sentry import eventstore
 from sentry.auth import access
 from sentry.tasks.base import instrumented_task
 from sentry.utils.email import send_messages
@@ -32,7 +33,7 @@ def _get_user_from_email(group, email):
 def process_inbound_email(mailfrom, group_id, payload):
     """
     """
-    from sentry.models import Event, Group
+    from sentry.models import Group
     from sentry.web.forms import NewNoteForm
 
     try:
@@ -49,7 +50,7 @@ def process_inbound_email(mailfrom, group_id, payload):
     event = group.get_latest_event()
 
     if event:
-        Event.objects.bind_nodes([event], 'data')
+        eventstore.bind_nodes([event])
         event.group = group
         event.project = group.project
 

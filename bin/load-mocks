@@ -19,14 +19,15 @@ from django.utils import timezone
 from loremipsum import Generator
 from pytz import utc
 
-from sentry import buffer, roles, tsdb
+from sentry import buffer, eventstore, roles, tsdb
 from sentry.event_manager import HashDiscarded
 from sentry.models import (
-    Activity, Broadcast, Commit, CommitAuthor, CommitFileChange, Deploy, EventAttachment, Event,
+    Activity, Broadcast, Commit, CommitAuthor, CommitFileChange, Deploy, EventAttachment,
     Environment, File, Group, GroupRelease, GroupTombstone, Organization,
     OrganizationAccessRequest, OrganizationMember, Project, Release,
     ReleaseCommit, ReleaseEnvironment, ReleaseProjectEnvironment, ReleaseFile, Repository,
-    Team, TOMBSTONE_FIELDS_FROM_GROUP, User, UserReport, Monitor, MonitorStatus, MonitorType, MonitorCheckIn, CheckInStatus
+    Team, TOMBSTONE_FIELDS_FROM_GROUP, User, UserReport, Monitor, MonitorStatus,
+    MonitorType, MonitorCheckIn, CheckInStatus
 )
 from sentry.signals import mocks_loaded
 from sentry.similarity import features
@@ -197,7 +198,7 @@ def create_sample_time_series(event, release=None):
     if event is None:
         return
 
-    Event.objects.bind_nodes([event], 'data')
+    eventstore.bind_nodes([event])
 
     group = event.group
 

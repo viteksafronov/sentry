@@ -1,7 +1,10 @@
 import React from 'react';
 import DocumentTitle from 'react-document-title';
 import PropTypes from 'prop-types';
+import * as ReactRouter from 'react-router';
+import {Location} from 'history';
 
+import {Organization} from 'app/types';
 import {t} from 'app/locale';
 import SentryTypes from 'app/sentryTypes';
 import GlobalSelectionHeader from 'app/components/organizations/globalSelectionHeader';
@@ -19,14 +22,22 @@ import EventDetails from './eventDetails';
 import {ALL_VIEWS} from './data';
 import {getCurrentView} from './utils';
 
-class OrganizationEventsV2 extends React.Component {
-  static propTypes = {
+type Props = {
+  organization: Organization;
+  location: Location;
+  router: ReactRouter.InjectedRouter;
+  // TODO: what is this?
+  params: any;
+};
+
+class OrganizationEventsV2 extends React.Component<Props> {
+  static propTypes: any = {
     organization: SentryTypes.Organization.isRequired,
     location: PropTypes.object.isRequired,
     router: PropTypes.object.isRequired,
   };
 
-  renderTabs() {
+  renderTabs(): React.ReactNode {
     const {location} = this.props;
     const currentView = getCurrentView(location.query.view);
 
@@ -54,6 +65,8 @@ class OrganizationEventsV2 extends React.Component {
   }
 
   render() {
+    console.log('this.props', this.props);
+
     const {organization, location, router} = this.props;
     const {eventSlug} = location.query;
     const currentView = getCurrentView(location.query.view);

@@ -5,7 +5,7 @@ export const URL_PARAM = {
   PERIOD: 'statsPeriod',
   PROJECT: 'project',
   ENVIRONMENT: 'environment',
-};
+} as const;
 
 export const DATE_TIME = {
   START: 'start',

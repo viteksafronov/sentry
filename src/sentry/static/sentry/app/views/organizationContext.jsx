@@ -42,6 +42,7 @@ const OrganizationContext = createReactClass({
     useLastOrganization: PropTypes.bool,
     organizationsLoading: PropTypes.bool,
     organizations: PropTypes.arrayOf(SentryTypes.Organization),
+    lightweight: PropTypes.bool,
   },
 
   childContextTypes: {
@@ -118,6 +119,7 @@ const OrganizationContext = createReactClass({
   },
 
   fetchData() {
+    const {lightweight} = this.props;
     if (!this.getOrganizationSlug()) {
       this.setState({loading: this.props.organizationsLoading});
       return;
@@ -125,7 +127,9 @@ const OrganizationContext = createReactClass({
 
     metric.mark('organization-details-fetch-start');
     const promises = [
-      this.props.api.requestPromise(this.getOrganizationDetailsEndpoint()),
+      this.props.api.requestPromise(this.getOrganizationDetailsEndpoint(), {
+        query: {detailed: !!lightweight ? 0 : 1},
+      }),
       fetchOrganizationEnvironments(this.props.api, this.getOrganizationSlug()),
     ];
 
@@ -136,7 +140,6 @@ const OrganizationContext = createReactClass({
         HookStore.get('organization:header').forEach(cb => {
           hooks.push(cb(data));
         });
-
         setActiveOrganization(data);
 
         // Configure scope to have organization tag
@@ -144,8 +147,10 @@ const OrganizationContext = createReactClass({
           scope.setTag('organization', data.id);
         });
 
-        TeamStore.loadInitialData(data.teams);
-        ProjectsStore.loadInitialData(data.projects);
+        if (!lightweight) {
+          TeamStore.loadInitialData(data.teams);
+          ProjectsStore.loadInitialData(data.projects);
+        }
 
         // Make an exception for issue details in the case where it is accessed directly (e.g. from email)
         // We do not want to load the user's last used env/project in this case, otherwise will
@@ -155,7 +160,9 @@ const OrganizationContext = createReactClass({
             ({path}) => path && path.includes('/organizations/:orgId/issues/:groupId/')
           )
         ) {
-          GlobalSelectionStore.loadInitialData(data, this.props.location.query);
+          if (!lightweight) {
+            GlobalSelectionStore.loadInitialData(data, this.props.location.query);
+          }
         }
         OrganizationEnvironmentsStore.loadInitialData(environments);
         this.setState(

@@ -673,6 +673,7 @@ function routes() {
       </Route>
     </React.Fragment>
   );
+
   return (
     <Route path="/" component={errorHandler(App)}>
       <Route

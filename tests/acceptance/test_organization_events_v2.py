@@ -30,6 +30,12 @@ class OrganizationEventsV2Test(AcceptanceTestCase, SnubaTestCase):
         self.browser.wait_until_not(".loading-indicator")
         self.browser.wait_until_not('[data-test-id="loading-placeholder"]')
 
+    def test_events_default_landing(self):
+        with self.feature(FEATURE_NAMES):
+            self.browser.get(self.path)
+            self.wait_until_loaded()
+            self.browser.snapshot("events-v2 - default landing")
+
     def test_all_events_empty(self):
         with self.feature(FEATURE_NAMES):
             self.browser.get(self.path + "?" + all_view)

@@ -145,33 +145,6 @@ class OrganizationEventsV2Test(AcceptanceTestCase, SnubaTestCase):
             self.wait_until_loaded()
             self.browser.snapshot("events-v2 - errors query")
 
-    def test_transactions_query_empty_state(self):
-        with self.feature(FEATURE_NAMES):
-            self.browser.get(self.path + "?" + transactions_query)
-            self.wait_until_loaded()
-            self.browser.snapshot("events-v2 - transactions query - empty state")
-
-    @patch("django.utils.timezone.now")
-    def test_transactions_query(self, mock_now):
-        mock_now.return_value = before_now().replace(tzinfo=pytz.utc)
-        min_ago = iso_format(before_now(minutes=1))
-
-        event_data = load_data("transaction")
-        event_data.update(
-            {
-                "event_id": "a" * 32,
-                "timestamp": min_ago,
-                "received": min_ago,
-                "fingerprint": ["group-1"],
-            }
-        )
-        self.store_event(data=event_data, project_id=self.project.id, assert_no_errors=False)
-
-        with self.feature(FEATURE_NAMES):
-            self.browser.get(self.path + "?" + transactions_query)
-            self.wait_until_loaded()
-            self.browser.snapshot("events-v2 - transactions query")
-
     @patch("django.utils.timezone.now")
     def test_modal_from_errors_view(self, mock_now):
         mock_now.return_value = before_now().replace(tzinfo=pytz.utc)
@@ -210,3 +183,30 @@ class OrganizationEventsV2Test(AcceptanceTestCase, SnubaTestCase):
 
             assert self.browser.element_exists_by_test_id("older-event")
             assert self.browser.element_exists_by_test_id("newer-event")
+
+    def test_transactions_query_empty_state(self):
+        with self.feature(FEATURE_NAMES):
+            self.browser.get(self.path + "?" + transactions_query)
+            self.wait_until_loaded()
+            self.browser.snapshot("events-v2 - transactions query - empty state")
+
+    @patch("django.utils.timezone.now")
+    def test_transactions_query(self, mock_now):
+        mock_now.return_value = before_now().replace(tzinfo=pytz.utc)
+        min_ago = iso_format(before_now(minutes=1))
+
+        event_data = load_data("transaction")
+        event_data.update(
+            {
+                "event_id": "a" * 32,
+                "timestamp": min_ago,
+                "received": min_ago,
+                "fingerprint": ["group-1"],
+            }
+        )
+        self.store_event(data=event_data, project_id=self.project.id, assert_no_errors=False)
+
+        with self.feature(FEATURE_NAMES):
+            self.browser.get(self.path + "?" + transactions_query)
+            self.wait_until_loaded()
+            self.browser.snapshot("events-v2 - transactions query")

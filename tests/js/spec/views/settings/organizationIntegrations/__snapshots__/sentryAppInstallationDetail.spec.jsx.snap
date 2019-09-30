@@ -272,6 +272,7 @@ exports[`Sentry App Installations displays all Apps owned by the Org 1`] = `
                                           "background": "transparent",
                                           "backgroundActive": "transparent",
                                           "color": "#3B6ECC",
+                                          "focusShadow": "rgba(226, 219, 232, 0.5)",
                                         },
                                         "primary": Object {
                                           "background": "#6C5FC7",
@@ -546,6 +547,7 @@ exports[`Sentry App Installations displays all Apps owned by the Org 1`] = `
                                                   "background": "transparent",
                                                   "backgroundActive": "transparent",
                                                   "color": "#3B6ECC",
+                                                  "focusShadow": "rgba(226, 219, 232, 0.5)",
                                                 },
                                                 "primary": Object {
                                                   "background": "#6C5FC7",

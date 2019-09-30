@@ -115,9 +115,21 @@ class OrganizationEventsV2Test(AcceptanceTestCase, SnubaTestCase):
             self.wait_until_loaded()
             self.browser.snapshot("events-v2 - transactions query - empty state")
 
-    def test_transactions_query(self):
+    @patch("django.utils.timezone.now")
+    def test_transactions_query(self, mock_now):
+        mock_now.return_value = before_now().replace(tzinfo=pytz.utc)
+        min_ago = iso_format(before_now(minutes=1))
 
         event_data = load_data("transaction")
+        event_data.update(
+            {
+                "event_id": "a" * 32,
+                "timestamp": min_ago,
+                "received": min_ago,
+                "fingerprint": ["group-1"],
+            }
+        )
+        self.store_event(data=event_data, project_id=self.project.id, assert_no_errors=False)
 
         with self.feature(FEATURE_NAMES):
             self.browser.get(self.path + "?" + transactions_query)
@@ -198,64 +210,3 @@ class OrganizationEventsV2Test(AcceptanceTestCase, SnubaTestCase):
 
             assert self.browser.element_exists_by_test_id("older-event")
             assert self.browser.element_exists_by_test_id("newer-event")
-
-    @patch("django.utils.timezone.now")
-    def test_modal_from_transactions_view(self, mock_now):
-        mock_now.return_value = before_now().replace(tzinfo=pytz.utc)
-
-        event_data = load_data("transaction")
-        event = self.store_event(
-            data=event_data, project_id=self.project.id, assert_no_errors=False
-        )
-
-        # with self.feature(FEATURE_NAMES):
-        #     # Get the list page
-        #     self.browser.get(self.path + "?" + errors_query + "&statsPeriod=24h")
-        #     self.wait_until_loaded()
-
-        #     # Click the event link to open the modal
-        #     self.browser.element('[aria-label="{}"]'.format(event.title)).click()
-        #     self.wait_until_loaded()
-
-        #     self.browser.snapshot("events-v2 - transaction modal")
-
-        #     # Check that the newest event is loaded first and that pagination
-        #     # controls display
-        #     display_id = self.browser.element('[data-test-id="event-id"]')
-        #     assert event_ids[0] in display_id.text
-
-        #     assert self.browser.element_exists_by_test_id("older-event")
-        #     assert self.browser.element_exists_by_test_id("newer-event")
-
-    # event_data["fingerprint"] = ["group-1"]
-    # for id_prefix, offset in event_source:
-    #     event_time = iso_format(before_now(minutes=offset))
-    #     event_data.update(
-    #         {
-    #             "timestamp": event_time,
-    #             "received": event_time,
-    #             "event_id": id_prefix * 32,
-    #             "type": "error",
-    #         }
-    #     )
-    #     event = self.store_event(data=event_data, project_id=self.project.id)
-    #     event_ids.append(event.event_id)
-
-    # with self.feature(FEATURE_NAMES):
-    #     # Get the list page
-    #     self.browser.get(self.path + "?" + error_view + "&statsPeriod=24h")
-    #     self.wait_until_loaded()
-
-    #     # Click the event link to open the modal
-    #     self.browser.element('[aria-label="{}"]'.format(event.title)).click()
-    #     self.wait_until_loaded()
-
-    #     self.browser.snapshot("events-v2 - grouped error modal")
-
-    #     # Check that the newest event is loaded first and that pagination
-    #     # controls display
-    #     display_id = self.browser.element('[data-test-id="event-id"]')
-    #     assert event_ids[0] in display_id.text
-
-    #     assert self.browser.element_exists_by_test_id("older-event")
-    #     assert self.browser.element_exists_by_test_id("newer-event")

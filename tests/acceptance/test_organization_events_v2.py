@@ -104,7 +104,7 @@ class OrganizationEventsV2Test(AcceptanceTestCase, SnubaTestCase):
         with self.feature(FEATURE_NAMES):
             self.browser.get(self.path + "?" + errors_query)
             self.wait_until_loaded()
-            self.browser.snapshot("events-v2 - all events query - empty state")
+            self.browser.snapshot("events-v2 - errors query - empty state")
 
     @patch("django.utils.timezone.now")
     def test_errors_query(self, mock_now):

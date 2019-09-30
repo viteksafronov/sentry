@@ -51,7 +51,7 @@
       "values": [
          {
             "category": "query",
-            "timestamp":1562681591.0,
+            "timestamp": 1569876654.900,
             "message": "SELECT \"countries\".\"id\", \"countries\".\"name\", \"countries\".\"continent\", \"countries\".\"region\", \"countries\".\"surface_area\", \"coun...'CAN'",
             "type": "default",
             "level": "info"
@@ -145,11 +145,72 @@
          "trace_id": "a7d67cf796774551a95be6543cacd459",
          "op": "db",
          "data": {},
-         "span_id": "b048b4c8fdc5168c"
+         "span_id": "b048b4c8fdc5168c",
+         "start_timestamp": 1569876654.900,
+         "timestamp": 1569876654.910
+      },
+      {
+         "same_process_as_parent":true,
+         "description": "Django: SELECT \"countries\".\"id\", \"countries\".\"name\", \"countries\".\"continent\", \"countries\".\"region\", \"countries\".\"surface_area\", \"coun...'CAN'",
+         "tags": {
+            "error":false
+         },
+         "parent_span_id": "b048b4c8fdc5168c",
+         "trace_id": "a7d67cf796774551a95be6543cacd459",
+         "op": "db",
+         "data": {},
+         "span_id": "0beec7b5ea3f0fdb",
+         "start_timestamp": 1569876654.910,
+         "timestamp": 1569876654.911
+      },
+      {
+         "same_process_as_parent":true,
+         "description": "Django: SELECT \"countries\".\"id\", \"countries\".\"name\", \"countries\".\"continent\", \"countries\".\"region\", \"countries\".\"surface_area\", \"coun...'CAN'",
+         "tags": {
+            "error":false
+         },
+         "parent_span_id": "0beec7b5ea3f0fdb",
+         "trace_id": "a7d67cf796774551a95be6543cacd459",
+         "op": "db",
+         "data": {},
+         "span_id": "c95d0dd47f3c5bc2",
+         "start_timestamp": 1569876654.912,
+         "timestamp": 1569876654.914
+      },
+      {
+         "same_process_as_parent":true,
+         "description": "Django: SELECT \"countries\".\"id\", \"countries\".\"name\", \"countries\".\"continent\", \"countries\".\"region\", \"countries\".\"surface_area\", \"coun...'CAN'",
+         "tags": {
+            "error":false
+         },
+         "parent_span_id": "c95d0dd47f3c5bc2",
+         "trace_id": "a7d67cf796774551a95be6543cacd459",
+         "op": "db",
+         "data": {},
+         "span_id": "62cdb7020ff920e5",
+         "start_timestamp": 1569876654.914,
+         "timestamp": 1569876654.919
+      },
+      {
+         "same_process_as_parent":true,
+         "description": "Django: SELECT \"countries\".\"id\", \"countries\".\"name\", \"countries\".\"continent\", \"countries\".\"region\", \"countries\".\"surface_area\", \"coun...'CAN'",
+         "tags": {
+            "error":false
+         },
+         "parent_span_id": "babaae0d4b7512d9",
+         "trace_id": "a7d67cf796774551a95be6543cacd459",
+         "op": "db",
+         "data": {},
+         "span_id": "bbe960a25ea311d2",
+         "start_timestamp": 1569876654.913,
+         "timestamp": 1569876654.920
       }
    ],
    "transaction": "/country_by_code/",
    "type": "transaction",
+   "startTimestamp": 1569876654.900,
+   "endTimestamp": 1569876654.920,
+   "timestamp": 1569876654.920,
    "user": {
       "ip_address": "127.0.0.1"
    }

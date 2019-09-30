@@ -13,6 +13,7 @@ FEATURE_NAMES = ("organizations:events-v2", "organizations:discover-v2-query-bui
 all_events_query = "alias=title&alias=type&alias=project&alias=user&alias=time&field=title&field=event.type&field=project&field=user&field=timestamp&name=All+Events&sort=-timestamp&tag=event.type&tag=release&tag=project.name&tag=user.email&tag=user.ip&tag=environment"
 errors_query = "field=title&alias=error&field=count%28id%29&alias=events&field=count_unique%28user%29&alias=users&field=project&alias=project&field=last_seen&alias=last+seen&name=Errors&query=event.type%3Aerror&sort=-last_seen&sort=-title&tag=error.type&tag=project.name"
 transactions_query = "alias=transaction&alias=project&alias=volume&field=transaction&field=project&field=count%28%29&name=Transactions&query=event.type%3Atransaction&sort=-count&tag=release&tag=project.name&tag=user.email&tag=user.ip&tag=environment"
+transaction_absolute_dates = "&end=2019-10-01T17%3A17%3A45&start=2019-09-16T17%3A17%3A45"
 
 
 class OrganizationEventsV2Test(AcceptanceTestCase, SnubaTestCase):
@@ -193,45 +194,25 @@ class OrganizationEventsV2Test(AcceptanceTestCase, SnubaTestCase):
     @patch("django.utils.timezone.now")
     def test_transactions_query(self, mock_now):
         mock_now.return_value = before_now().replace(tzinfo=pytz.utc)
-        min_ago = iso_format(before_now(minutes=1))
-
         event_data = load_data("transaction")
-        event_data.update(
-            {
-                "event_id": "a" * 32,
-                "timestamp": min_ago,
-                "received": min_ago,
-                "fingerprint": ["group-1"],
-            }
-        )
         self.store_event(data=event_data, project_id=self.project.id, assert_no_errors=False)
 
         with self.feature(FEATURE_NAMES):
-            self.browser.get(self.path + "?" + transactions_query)
+            self.browser.get(self.path + "?" + transactions_query + transaction_absolute_dates)
             self.wait_until_loaded()
             self.browser.snapshot("events-v2 - transactions query - list")
 
     @patch("django.utils.timezone.now")
     def test_modal_from_transactions_query(self, mock_now):
         mock_now.return_value = before_now().replace(tzinfo=pytz.utc)
-        min_ago = iso_format(before_now(minutes=1))
-
         event_data = load_data("transaction")
-        event_data.update(
-            {
-                "event_id": "a" * 32,
-                "timestamp": min_ago,
-                "received": min_ago,
-                "fingerprint": ["group-1"],
-            }
-        )
         event = self.store_event(
             data=event_data, project_id=self.project.id, assert_no_errors=False
         )
 
         with self.feature(FEATURE_NAMES):
             # Get the list page
-            self.browser.get(self.path + "?" + transactions_query + "&statsPeriod=24h")
+            self.browser.get(self.path + "?" + transactions_query + transaction_absolute_dates)
             self.wait_until_loaded()
 
             # Click the event link to open the modal

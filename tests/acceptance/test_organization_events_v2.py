@@ -61,10 +61,10 @@ class OrganizationEventsV2Test(AcceptanceTestCase, SnubaTestCase):
         with self.feature(FEATURE_NAMES):
             self.browser.get(self.path + "?" + all_events_query)
             self.wait_until_loaded()
-            self.browser.snapshot("events-v2 - all events query")
+            self.browser.snapshot("events-v2 - all events query - list")
 
     @patch("django.utils.timezone.now")
-    def test_modal_from_all_events(self, mock_now):
+    def test_modal_from_all_events_query(self, mock_now):
         mock_now.return_value = before_now().replace(tzinfo=pytz.utc)
         min_ago = iso_format(before_now(minutes=1))
 
@@ -97,7 +97,7 @@ class OrganizationEventsV2Test(AcceptanceTestCase, SnubaTestCase):
             issue_event_url_fragment = "/issues/%s/events/%s/" % (event.group_id, event.event_id)
             assert issue_event_url_fragment in issue_link.get_attribute("href")
 
-            self.browser.snapshot("events-v2 - single error modal")
+            self.browser.snapshot("events-v2 - all events query - modal")
 
     def test_errors_query_empty_state(self):
         with self.feature(FEATURE_NAMES):
@@ -143,10 +143,10 @@ class OrganizationEventsV2Test(AcceptanceTestCase, SnubaTestCase):
         with self.feature(FEATURE_NAMES):
             self.browser.get(self.path + "?" + errors_query)
             self.wait_until_loaded()
-            self.browser.snapshot("events-v2 - errors query")
+            self.browser.snapshot("events-v2 - errors query - list")
 
     @patch("django.utils.timezone.now")
-    def test_modal_from_errors_view(self, mock_now):
+    def test_modal_from_errors_query(self, mock_now):
         mock_now.return_value = before_now().replace(tzinfo=pytz.utc)
         event_source = (("a", 1), ("b", 39), ("c", 69))
         event_ids = []
@@ -174,7 +174,7 @@ class OrganizationEventsV2Test(AcceptanceTestCase, SnubaTestCase):
             self.browser.element('[aria-label="{}"]'.format(event.title)).click()
             self.wait_until_loaded()
 
-            self.browser.snapshot("events-v2 - grouped error modal")
+            self.browser.snapshot("events-v2 - errors query - modal")
 
             # Check that the newest event is loaded first and that pagination
             # controls display
@@ -209,4 +209,33 @@ class OrganizationEventsV2Test(AcceptanceTestCase, SnubaTestCase):
         with self.feature(FEATURE_NAMES):
             self.browser.get(self.path + "?" + transactions_query)
             self.wait_until_loaded()
-            self.browser.snapshot("events-v2 - transactions query")
+            self.browser.snapshot("events-v2 - transactions query - list")
+
+    @patch("django.utils.timezone.now")
+    def test_modal_from_transactions_query(self, mock_now):
+        mock_now.return_value = before_now().replace(tzinfo=pytz.utc)
+        min_ago = iso_format(before_now(minutes=1))
+
+        event_data = load_data("transaction")
+        event_data.update(
+            {
+                "event_id": "a" * 32,
+                "timestamp": min_ago,
+                "received": min_ago,
+                "fingerprint": ["group-1"],
+            }
+        )
+        event = self.store_event(
+            data=event_data, project_id=self.project.id, assert_no_errors=False
+        )
+
+        with self.feature(FEATURE_NAMES):
+            # Get the list page
+            self.browser.get(self.path + "?" + transactions_query + "&statsPeriod=24h")
+            self.wait_until_loaded()
+
+            # Click the event link to open the modal
+            self.browser.element('[aria-label="{}"]'.format(event.title)).click()
+            self.wait_until_loaded()
+
+            self.browser.snapshot("events-v2 - transactions query - modal")

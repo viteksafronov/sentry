@@ -80,7 +80,7 @@ type EntryType = {
   type: string;
 };
 
-export type EventTag = {key: string; value: string};
+export type EventTag = {query: string; key: string; value: string};
 
 type EventUser = {
   username?: string;

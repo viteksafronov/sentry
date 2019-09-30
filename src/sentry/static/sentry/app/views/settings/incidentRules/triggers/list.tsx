@@ -82,7 +82,7 @@ export default class TriggersList extends React.Component<Props> {
                       priority="danger"
                     >
                       <Button
-                        priority="danger"
+                        priority="default"
                         size="small"
                         aria-label={t('Delete Trigger')}
                         icon="icon-trash"

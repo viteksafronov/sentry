@@ -59,16 +59,14 @@ class Dashboard extends React.Component {
       );
     }
 
-    const projectsByTeam = Object.fromEntries(
-      teams.map(teamObj => [teamObj.slug, sortProjects(teamObj.projects)])
-    );
+    const filteredTeams = teams.filter(team => team.projects.length);
+    filteredTeams.sort((team1, team2) => team1.slug.localeCompare(team2.slug));
+
     const projects = _.uniq(_.flatten(teams.map(teamObj => teamObj.projects)), 'id');
-    const teamSlugs = Object.keys(projectsByTeam).sort();
     const favorites = projects.filter(project => project.isBookmarked);
 
     const access = new Set(organization.access);
     const canCreateProjects = access.has('project:admin');
-    const teamsMap = new Map(teams.map(teamObj => [teamObj.slug, teamObj]));
     const hasTeamAdminAccess = access.has('team:admin');
 
     const showEmptyMessage = projects.length === 0 && favorites.length === 0;
@@ -104,11 +102,10 @@ class Dashboard extends React.Component {
           </ProjectsHeader>
         )}
 
-        {teamSlugs.map((slug, index) => {
-          const showBorder = index !== teamSlugs.length - 1;
-          const team = teamsMap.get(slug);
+        {filteredTeams.map((team, index) => {
+          const showBorder = index !== teams.length - 1;
           return (
-            <LazyLoad key={slug} once debounce={50} height={300} offset={300}>
+            <LazyLoad key={team.slug} once debounce={50} height={300} offset={300}>
               <TeamSection
                 orgId={params.orgId}
                 team={team}
@@ -122,7 +119,7 @@ class Dashboard extends React.Component {
                     <IdBadge team={team} avatarSize={22} />
                   )
                 }
-                projects={projectsByTeam[slug]}
+                projects={sortProjects(team.projects)}
                 access={access}
               />
             </LazyLoad>

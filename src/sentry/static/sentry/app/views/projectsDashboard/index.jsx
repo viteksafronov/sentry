@@ -4,11 +4,11 @@ import LazyLoad from 'react-lazyload';
 import PropTypes from 'prop-types';
 import React from 'react';
 import styled from 'react-emotion';
+import _ from 'lodash';
 
-import {sortProjects} from 'app/utils';
 import {t} from 'app/locale';
+import Alert from 'app/components/alert';
 import Button from 'app/components/button';
-import ConfigStore from 'app/stores/configStore';
 import IdBadge from 'app/components/idBadge';
 import NoProjectMessage from 'app/components/noProjectMessage';
 import PageHeading from 'app/components/pageHeading';
@@ -16,23 +16,22 @@ import ProjectsStatsStore from 'app/stores/projectsStatsStore';
 import SentryTypes from 'app/sentryTypes';
 import getRouteStringFromRoutes from 'app/utils/getRouteStringFromRoutes';
 import space from 'app/styles/space';
+import {sortProjects} from 'app/utils';
 import LoadingIndicator from 'app/components/loadingIndicator';
 import withApi from 'app/utils/withApi';
 import withOrganization from 'app/utils/withOrganization';
-import withTeamProjects from 'app/utils/withTeamProjects';
-import withUsersTeams from 'app/utils/withUsersTeams';
+import withTeamsForUser from 'app/utils/withTeamsForUser';
 
 import Resources from './resources';
 import TeamSection from './teamSection';
-import getProjectsByTeams from './getProjectsByTeams';
 
 class Dashboard extends React.Component {
   static propTypes = {
     routes: PropTypes.array,
     teams: PropTypes.array,
-    projects: PropTypes.array,
     organization: SentryTypes.Organization,
-    loadingProjects: PropTypes.bool,
+    loadingTeams: PropTypes.bool,
+    error: PropTypes.instanceOf(Error),
   };
 
   componentDidMount() {
@@ -48,16 +47,22 @@ class Dashboard extends React.Component {
   }
 
   render() {
-    const {teams, projects, params, organization, loadingProjects} = this.props;
+    const {teams, params, organization, loadingTeams, error} = this.props;
 
-    if (loadingProjects) {
+    if (loadingTeams) {
       return <LoadingIndicator />;
     }
 
-    const sortedProjects = sortProjects(projects);
+    if (error) {
+      return (
+        <Alert type="error">{t('An error occurred while fetching your projects')}</Alert>
+      );
+    }
 
-    const {isSuperuser} = ConfigStore.get('user');
-    const {projectsByTeam} = getProjectsByTeams(teams, sortedProjects, isSuperuser);
+    const projectsByTeam = Object.fromEntries(
+      teams.map(teamObj => [teamObj.slug, sortProjects(teamObj.projects)])
+    );
+    const projects = _.uniq(_.flatten(teams.map(teamObj => teamObj.projects)), 'id');
     const teamSlugs = Object.keys(projectsByTeam).sort();
     const favorites = projects.filter(project => project.isBookmarked);
 
@@ -66,7 +71,7 @@ class Dashboard extends React.Component {
     const teamsMap = new Map(teams.map(teamObj => [teamObj.slug, teamObj]));
     const hasTeamAdminAccess = access.has('team:admin');
 
-    const showEmptyMessage = teamSlugs.length === 0 && favorites.length === 0;
+    const showEmptyMessage = projects.length === 0 && favorites.length === 0;
     const showResources = projects.length === 1 && !projects[0].firstEvent;
 
     if (showEmptyMessage) {
@@ -151,6 +156,4 @@ const ProjectsHeader = styled('div')`
 `;
 
 export {Dashboard};
-export default withApi(
-  withOrganization(withUsersTeams(withTeamProjects(OrganizationDashboard)))
-);
+export default withApi(withOrganization(withTeamsForUser(OrganizationDashboard)));

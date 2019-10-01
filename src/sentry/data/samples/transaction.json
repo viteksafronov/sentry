@@ -208,8 +208,7 @@
    ],
    "transaction": "/country_by_code/",
    "type": "transaction",
-   "startTimestamp": 1569876654.900,
-   "endTimestamp": 1569876654.920,
+   "start_timestamp": 1569876654.900,
    "timestamp": 1569876654.920,
    "user": {
       "ip_address": "127.0.0.1"
